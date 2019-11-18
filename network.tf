@@ -24,8 +24,17 @@ resource "aws_internet_gateway" "app_gw" {
 resource "aws_subnet" "public_subnets" {
   count      = "${length(var.azs)}"
   vpc_id     = "${aws_vpc.app_vpc.id}"
-  cidr_block = "${element(var.subnet_cidr, count.index)}"
+  cidr_block = "${element(var.public_subnet_cidr, count.index)}"
   tags = {
     Name = "genesis-public-subnet-${count.index + 1}"
+  }
+}
+
+resource "aws_subnet" "private_subnets" {
+  count      = "${length(var.azs)}"
+  vpc_id     = "${aws_vpc.app_vpc.id}"
+  cidr_block = "${element(var.private_subnet_cidr, count.index)}"
+  tags = {
+    Name = "genesis-private-subnet-${count.index + 1}"
   }
 }
