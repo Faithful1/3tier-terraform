@@ -7,13 +7,16 @@ resource "aws_vpc" "app_vpc" {
   instance_tenancy     = "default"
   enable_dns_hostnames = true
   tags = {
-    Name = "genesis app vpc"
+    Name = "genesis-app-vpc"
   }
 }
 
 # create internet gateway and attach to vpc
 resource "aws_internet_gateway" "app_gw" {
   vpc_id = "${aws_vpc.app_vpc.id}"
+  tags = {
+    Name = "genesis-app-igw"
+  }
 }
 
 # provision public subnet using length function to create 2 subnets at once
@@ -23,6 +26,6 @@ resource "aws_subnet" "public_subnets" {
   vpc_id     = "${aws_vpc.app_vpc.id}"
   cidr_block = "${element(var.subnet_cidr, count.index)}"
   tags = {
-    Name = "public-subnet-${count.index + 1}"
+    Name = "genesis-public-subnet-${count.index + 1}"
   }
 }
