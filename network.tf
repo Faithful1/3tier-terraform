@@ -7,8 +7,7 @@ resource "aws_vpc" "app_vpc" {
   instance_tenancy     = "default"
   enable_dns_hostnames = true
   tags = {
-    Name     = "genesis-vpc"
-    Location = "kuala-lumpur"
+    Name = "genesis app vpc"
   }
 }
 
@@ -22,7 +21,7 @@ resource "aws_internet_gateway" "app_gw" {
 resource "aws_subnet" "public_subnets" {
   count      = "${length(var.azs)}"
   vpc_id     = "${aws_vpc.app_vpc.id}"
-  cidr_block = "${element(var.subnet_cidr, index)}"
+  cidr_block = "${element(var.subnet_cidr, count.index)}"
   tags = {
     Name = "public-subnet-${count.index + 1}"
   }
