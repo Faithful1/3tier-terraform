@@ -17,13 +17,13 @@ resource "aws_internet_gateway" "app_gw" {
   vpc_id = "${aws_vpc.app_vpc.id}"
 }
 
-# provision public subnet dynamically
+# provision public subnet using length function to create 2 subnets at once
+# use element function to pick one element at a time for the subnet_cidr
 resource "aws_subnet" "public_subnets" {
   count      = "${length(var.azs)}"
   vpc_id     = "${aws_vpc.app_vpc.id}"
-  cidr_block = "${var.subnet_cidr}"
-
+  cidr_block = "${element(var.subnet_cidr, index)}"
   tags = {
-    Name = "public-subnets"
+    Name = "public-subnet-${count.index + 1}"
   }
 }
