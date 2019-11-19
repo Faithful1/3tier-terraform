@@ -6,6 +6,7 @@ resource "aws_vpc" "app_vpc" {
   cidr_block           = var.vpc_cidr
   instance_tenancy     = "default"
   enable_dns_hostnames = true
+
   tags = {
     Name = "genesis-app-vpc"
   }
@@ -14,40 +15,45 @@ resource "aws_vpc" "app_vpc" {
 # Internet Gateway
 resource "aws_internet_gateway" "app_gw" {
   vpc_id = aws_vpc.app_vpc.id
+
   tags = {
     Name = "genesis-app-igw"
   }
 }
 
-# Subnets : public
+# Subnets: public
 resource "aws_subnet" "app_public_subnets" {
   count             = length(var.azs)
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = element(var.public_subnet_cidr, count.index)
   availability_zone = element(var.azs, count.index)
+
   tags = {
     Name = "genesis-public-subnet-${count.index + 1}"
   }
 }
 
-# Subnets : private
+# Subnets: private
 resource "aws_subnet" "app_private_subnets" {
   count             = length(var.azs)
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = element(var.private_subnet_cidr, count.index)
   availability_zone = element(var.azs, count.index)
+
   tags = {
     Name = "genesis-private-subnet-${count.index + 1}"
   }
 }
 
-# Route table: public to attach Internet Gateway 
+# Route table: public to attach to Internet Gateway 
 resource "aws_route_table" "app_public_rt" {
   vpc_id = aws_vpc.app_vpc.id
+
   route {
     cidr_block = var.public_rt_cidr
     gateway_id = aws_internet_gateway.app_gw.id
   }
+
   tags = {
     Name = "genesis-public-rt"
   }
@@ -56,26 +62,46 @@ resource "aws_route_table" "app_public_rt" {
 # Route table: private to attach to Internet Gateway 
 resource "aws_route_table" "app_private_rt" {
   vpc_id = aws_vpc.app_vpc.id
+
   route {
-    cidr_block = var.public_rt_cidr
+    cidr_block = var.private_rt_cidr
     gateway_id = aws_internet_gateway.app_gw.id
   }
+
   tags = {
     Name = "genesis-private-rt"
   }
 }
 
 # Route table association: attach with public subnets
-resource "aws_route_table_association" "app_rt_as_public" {
+resource "aws_route_table_association" "app_rt_public_as" {
   count          = length(var.public_subnet_cidr)
   subnet_id      = element(aws_subnet.app_public_subnets.*.id, count.index)
   route_table_id = aws_route_table.app_public_rt.id
 }
 
 
-# Route table association:  with private subnets
-resource "aws_route_table_association" "app_rt_as_private" {
+# Route table association: attach with private subnets
+resource "aws_route_table_association" "app_rt_private_as" {
   count          = length(var.private_subnet_cidr)
   subnet_id      = element(aws_subnet.app_private_subnets.*.id, count.index)
   route_table_id = aws_route_table.app_private_rt.id
 }
+
+# Elastic ip: for nat gateway
+resource "aws_eip" "app_eip" {
+  vpc      = true
+}
+
+# NAT Gateway: seats on 1 public subnet and exposes private subnets to the internet
+resource "aws_nat_gateway" "app_nat_gw" {
+  allocation_id = aws_eip.app_eip.id
+  subnet_id     = aws_subnet.app_public_subnets[0].id
+  tags = {
+    Name = "genesis-nat-gw"
+  }
+
+  depends_on = [aws_internet_gateway.app_gw]
+}
+
+
