@@ -12,36 +12,15 @@ resource "aws_vpc" "app_vpc" {
   }
 }
 
+# Query all avilable Availibility Zone
+data "aws_availability_zones" "app_available" {}
+
 # Internet Gateway
 resource "aws_internet_gateway" "app_gw" {
   vpc_id = aws_vpc.app_vpc.id
 
   tags = {
     Name = "genesis-app-igw"
-  }
-}
-
-# Subnets: public
-resource "aws_subnet" "app_public_subnets" {
-  count             = length(var.azs)
-  vpc_id            = aws_vpc.app_vpc.id
-  cidr_block        = element(var.public_subnet_cidr, count.index)
-  availability_zone = element(var.azs, count.index)
-
-  tags = {
-    Name = "genesis-public-subnet-${count.index + 1}"
-  }
-}
-
-# Subnets: private
-resource "aws_subnet" "app_private_subnets" {
-  count             = length(var.azs)
-  vpc_id            = aws_vpc.app_vpc.id
-  cidr_block        = element(var.private_subnet_cidr, count.index)
-  availability_zone = element(var.azs, count.index)
-
-  tags = {
-    Name = "genesis-private-subnet-${count.index + 1}"
   }
 }
 
@@ -73,8 +52,35 @@ resource "aws_route_table" "app_private_rt" {
   }
 }
 
+
+# Subnets: public
+resource "aws_subnet" "app_public_subnets" {
+  count                   = 2
+  vpc_id                  = aws_vpc.app_vpc.id
+  map_public_ip_on_launch = true
+  cidr_block              = element(var.public_subnet_cidr, count.index)
+  availability_zone       = data.aws_availability_zones.app_available.names[count.index]
+
+  tags = {
+    Name = "genesis-public-subnet-${count.index + 1}"
+  }
+}
+
+# Subnets: private
+resource "aws_subnet" "app_private_subnets" {
+  count             = 2
+  vpc_id            = aws_vpc.app_vpc.id
+  cidr_block        = element(var.private_subnet_cidr, count.index)
+  availability_zone = data.aws_availability_zones.app_available.names[count.index]
+
+  tags = {
+    Name = "genesis-private-subnet-${count.index + 1}"
+  }
+}
+
+
 # Route table association: attach with public subnets
-resource "aws_route_table_association" "app_rt_public_as" {
+resource "aws_route_table_association" "app_rt_public_assoc" {
   count          = length(var.public_subnet_cidr)
   subnet_id      = element(aws_subnet.app_public_subnets.*.id, count.index)
   route_table_id = aws_route_table.app_public_rt.id
@@ -82,7 +88,7 @@ resource "aws_route_table_association" "app_rt_public_as" {
 }
 
 # Route table association: attach with private subnets
-resource "aws_route_table_association" "app_rt_private_as" {
+resource "aws_route_table_association" "app_rt_private_assoc" {
   count          = length(var.private_subnet_cidr)
   subnet_id      = element(aws_subnet.app_private_subnets.*.id, count.index)
   route_table_id = aws_route_table.app_private_rt.id
@@ -112,30 +118,31 @@ resource "aws_security_group" "app_security_group" {
 }
 
 # Ingress Security Port 22
-resource "aws_security_group_rule" "ssh_inbound_access" {
+resource "aws_security_group_rule" "app_front_ssh_inbound_access" {
   from_port         = 22
+  to_port           = 22
   protocol          = "tcp"
   security_group_id = aws_security_group.app_security_group.id
-  to_port           = 22
   type              = "ingress"
   cidr_blocks       = ["0.0.0.0/0"]
 }
 
-resource "aws_security_group_rule" "http_inbound_access" {
+# Ingress Security Port 80
+resource "aws_security_group_rule" "app_front_inbound_access" {
   from_port         = 80
+  to_port           = 80
   protocol          = "tcp"
   security_group_id = aws_security_group.app_security_group.id
-  to_port           = 80
   type              = "ingress"
   cidr_blocks       = ["0.0.0.0/0"]
 }
 
 # All OutBound Access
-resource "aws_security_group_rule" "all_outbound_access" {
+resource "aws_security_group_rule" "app_front_all_outbound_access" {
   from_port         = 0
+  to_port           = 0
   protocol          = "-1"
   security_group_id = aws_security_group.app_security_group.id
-  to_port           = 0
   type              = "egress"
   cidr_blocks       = ["0.0.0.0/0"]
 }
