@@ -21,3 +21,14 @@ module "ec2" {
   public_subnets     = "${module.vpc.genesis_public_subnets}"
   ami                = "ami-02c9e57e"
 }
+
+module "alb" {
+  source = "./alb"
+  vpc_id = "${module.vpc.genesis_vpc_id}"
+
+  instance1_id = "${module.ec2.instance1_id}"
+  instance2_id = "${module.ec2.instance2_id}"
+
+  public_subnet1 = "${module.vpc.public_subnet1}"
+  public_subnet2 = "${module.vpc.public_subnet2}"
+}

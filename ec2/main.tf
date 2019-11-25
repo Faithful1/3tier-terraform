@@ -20,24 +20,3 @@ resource "aws_instance" "app_front_instance" {
     Name = "genesis-front-instance-${count.index + 1}"
   }
 }
-
-# resource "aws_ebs_volume" "app_front_instance_ebs" {
-#   count             = 2
-#   availability_zone = data.aws_availability_zones.var.azs[count.index]
-#   size              = 1
-#   type              = "gp2"
-#   tags = {
-#     Name = "genesis-front-ebs-${count.index + 1}"
-#   }
-# }
-
-# resource "aws_volume_attachment" "app_front_vol" {
-#   count        = 2
-#   device_name  = "/dev/xvdh"
-#   instance_id  = aws_instance.app_front_instance.*.id[count.index]
-#   volume_id    = aws_ebs_volume.app_front_instance_ebs.*.id[count.index]
-#   force_detach = true
-#   tags = {
-#     Name = "genesis-front-volume-${count.index + 1}"
-#   }
-# }
