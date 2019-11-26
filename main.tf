@@ -41,3 +41,11 @@ module "auto_scaling" {
   instance_type    = "t2.micro"
   ami              = "ami-02c9e57e"
 }
+
+module "rds" {
+  source      = "./rds"
+  db_instance = "db.t2.micro"
+  rds_subnet1 = "${module.vpc.private_subnet1}"
+  rds_subnet2 = "${module.vpc.private_subnet2}"
+  vpc_id      = "${module.vpc.genesis_vpc_id}"
+}

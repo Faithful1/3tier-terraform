@@ -22,10 +22,10 @@ output "public_subnet2" {
   value = "${element(aws_subnet.app_public_subnet.*.id, 2)}"
 }
 
-# output "private_subnet1" {
-#   value = "${element(aws_subnet.app_private_subnet.*.id, 1)}"
-# }
+output "private_subnet1" {
+  value = "${element(aws_subnet.app_private_subnet.*.id, 1)}"
+}
 
-# output "private_subnet2" {
-#   value = "${element(aws_subnet.app_private_subnet.*.id, 2)}"
-# }
+output "private_subnet2" {
+  value = "${element(aws_subnet.app_private_subnet.*.id, 2)}"
+}
