@@ -1,5 +1,15 @@
+#  Local .terraform directories
+**/.terraform/*
 .terraform
-*.tfstate*
-*.tfvars*
-vars.tf
 */terraform.tfvars
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars files
+*.tfvars*
+*.tfvars
+vars.tf
+
+

@@ -54,7 +54,7 @@ resource "aws_route_table" "app_private_rt" {
 
 
 # Subnets: public
-resource "aws_subnet" "app_public_subnets" {
+resource "aws_subnet" "app_public_subnet" {
   count                   = 2
   vpc_id                  = aws_vpc.app_vpc.id
   map_public_ip_on_launch = true
@@ -67,7 +67,7 @@ resource "aws_subnet" "app_public_subnets" {
 }
 
 # Subnets: private
-resource "aws_subnet" "app_private_subnets" {
+resource "aws_subnet" "app_private_subnet" {
   count             = 2
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = element(var.private_subnet_cidr, count.index)
@@ -82,17 +82,17 @@ resource "aws_subnet" "app_private_subnets" {
 # Route table association: attach with public subnets
 resource "aws_route_table_association" "app_rt_public_assoc" {
   count          = length(var.public_subnet_cidr)
-  subnet_id      = element(aws_subnet.app_public_subnets.*.id, count.index)
+  subnet_id      = element(aws_subnet.app_public_subnet.*.id, count.index)
   route_table_id = aws_route_table.app_public_rt.id
-  depends_on     = [aws_route_table.app_public_rt, aws_subnet.app_public_subnets]
+  depends_on     = [aws_route_table.app_public_rt, aws_subnet.app_public_subnet]
 }
 
 # Route table association: attach with private subnets
 resource "aws_route_table_association" "app_rt_private_assoc" {
   count          = length(var.private_subnet_cidr)
-  subnet_id      = element(aws_subnet.app_private_subnets.*.id, count.index)
+  subnet_id      = element(aws_subnet.app_private_subnet.*.id, count.index)
   route_table_id = aws_route_table.app_private_rt.id
-  depends_on     = [aws_route_table.app_private_rt, aws_subnet.app_private_subnets]
+  depends_on     = [aws_route_table.app_private_rt, aws_subnet.app_private_subnet]
 }
 
 # Elastic ip: for nat gateway
@@ -103,7 +103,7 @@ resource "aws_eip" "app_eip" {
 # NAT Gateway: seats on 1 public subnet and exposes private subnets to the net
 resource "aws_nat_gateway" "app_nat_gw" {
   allocation_id = aws_eip.app_eip.id
-  subnet_id     = aws_subnet.app_public_subnets[0].id
+  subnet_id     = aws_subnet.app_public_subnet[0].id
   tags = {
     Name = "genesis-nat-gw"
   }
