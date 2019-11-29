@@ -7,6 +7,11 @@ variable "instance_type" {}
 
 variable "ami" {}
 
-variable "subnet_id" {
-  type = list
-}
+variable "public_subnet_1" {}
+
+variable "public_subnet_2" {}
+
+variable "key_name" {}
+
+variable "alb-security-group" {}
+

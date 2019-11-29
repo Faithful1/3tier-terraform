@@ -1,44 +1,49 @@
-resource "aws_db_instance" "my-test-sql" {
-  instance_class          = "${var.db_instance}"
+resource "aws_db_subnet_group" "app_rds_subnet_group" {
+  name        = "genesis-rds-db-subnet-group"
+  description = "RDS subnet group"
+  subnet_ids  = [var.app_private_subnet_1, var.app_private_subnet_2]
+}
+
+resource "aws_db_instance" "app_mysql_db" {
+  allocated_storage       = 100 #100gb of storage gives us nire IOPS than a lower number
   engine                  = "mysql"
   engine_version          = "5.7"
+  instance_class          = var.db_instance
+  identifier              = var.identifier
+  name                    = "genesisrds"
   multi_az                = true
-  storage_type            = "gp2"
-  allocated_storage       = 20
-  name                    = "mytestrds"
-  username                = "admin"
-  password                = "admin123"
+  username                = var.RDS_USERNAME
+  password                = var.RDS_PASSWORD
   apply_immediately       = "true"
-  backup_retention_period = 10
+  backup_retention_period = 30
   backup_window           = "09:46-10:16"
-  db_subnet_group_name    = "${aws_db_subnet_group.my-rds-db-subnet.name}"
-  vpc_security_group_ids  = ["${aws_security_group.my-rds-sg.id}"]
+  db_subnet_group_name    = aws_db_subnet_group.app_rds_subnet_group.name
+  vpc_security_group_ids  = ["${aws_security_group.app_rds_sg.id}"]
+  skip_final_snapshot     = true
 }
 
-resource "aws_db_subnet_group" "my-rds-db-subnet" {
-  name       = "my-rds-db-subnet"
-  subnet_ids = ["${var.rds_subnet1}", "${var.rds_subnet2}"]
-}
+resource "aws_security_group" "app_rds_sg" {
+  name        = "my-rds-sg"
+  vpc_id      = var.vpc_id
+  description = "security group for load balancer"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-resource "aws_security_group" "my-rds-sg" {
-  name   = "my-rds-sg"
-  vpc_id = "${var.vpc_id}"
-}
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-resource "aws_security_group_rule" "my-rds-sg-rule" {
-  from_port         = 3306
-  protocol          = "tcp"
-  security_group_id = "${aws_security_group.my-rds-sg.id}"
-  to_port           = 3306
-  type              = "ingress"
-  cidr_blocks       = ["0.0.0.0/0"]
-}
-
-resource "aws_security_group_rule" "outbound_rule" {
-  from_port         = 0
-  protocol          = "-1"
-  security_group_id = "${aws_security_group.my-rds-sg.id}"
-  to_port           = 0
-  type              = "egress"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [var.instance_sg]
+  }
 }
