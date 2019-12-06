@@ -2,7 +2,7 @@ resource "aws_launch_configuration" "app_launch_config" {
   image_id        = var.ami
   instance_type   = var.instance_type
   security_groups = ["${aws_security_group.app_asg_sg.id}"]
-  user_data       = "${file("${path.module}/install_apache.sh")}"
+  user_data       = file("${path.module}/install_apache.sh")
   key_name        = var.key_name
 
   lifecycle {
