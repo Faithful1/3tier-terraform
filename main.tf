@@ -56,3 +56,8 @@ module "rds" {
 module "s3" {
   source = "./s3"
 }
+
+module "sns_topic" {
+  source       = "./sns"
+  alarms_email = "faithfulanere@gmail.com"
+}
