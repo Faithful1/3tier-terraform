@@ -125,7 +125,7 @@ resource "aws_nat_gateway" "app_nat_gw" {
   depends_on = [aws_internet_gateway.app_gw]
 }
 
-# Security Group Creation
+# vpc security Group Creation
 resource "aws_security_group" "app_security_group" {
   name   = "genesis-sg"
   vpc_id = aws_vpc.app_vpc.id
