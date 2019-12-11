@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "genesis_terraform_state_bucket" {
   bucket = "genesis-terraform-state-bucket"
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
   versioning {
     enabled = true
@@ -34,11 +34,10 @@ resource "aws_dynamodb_table" "genesis-terraform-dynamodb-locks" {
 
 terraform {
   backend "s3" {
-    #your bucket name
-    bucket         = "genesis-terraform-state-bucket"
-    key            = "genesis/s3/terraform.tfstate"
+    bucket         = "${genesis_terraform_state_bucket}"
+    key            = "genesis/prod/terraform.tfstate"
     region         = "ap-southeast-1"
-    dynamodb_table = "genesis-terraform-dynamodb-locks"
+    dynamodb_table = "${genesis-terraform-dynamodb-locks-table}"
     encrypt        = true
   }
 }

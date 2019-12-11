@@ -52,3 +52,7 @@ module "rds" {
   RDS_PASSWORD         = "admin123"
   instance_sg          = "${module.auto_scaling.instance_security_group}"
 }
+
+module "s3" {
+  source = "./s3"
+}
